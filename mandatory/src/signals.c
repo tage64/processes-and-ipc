@@ -1,10 +1,10 @@
-#include <stdio.h>   // puts(), printf()
 #include <signal.h>  // SIGFPE, SIGSEGV, SIGINT
+#include <stdbool.h> // true, false
+#include <stdio.h>   // puts(), printf()
 #include <stdlib.h>  // exit(), EXIT_SUCCESS, EXIT_FAIURE
 #include <unistd.h>  // getpid(), pause()
-#include <stdbool.h> // true, false
 
-bool done = false;
+volatile sig_atomic_t done = false;
 
 int divide_by_zero() {
   int a = 1;
@@ -18,37 +18,46 @@ void segfault() {
 }
 
 void signal_handler(int s) {
-  switch(s) {
-    case SIGFPE:
-      fputs("Caught SIGFPE: arithmetic exception, such as division by zero.\n", stderr);
-      exit(EXIT_FAILURE);
-    case SIGSEGV:
-      fputs("Caught SIGSEGV: segfault.\n", stderr);
-      exit(EXIT_FAILURE);
-      break;
-    case SIGINT:
-      fputs("Caught SIGINT: interactive attention signal, probably a ctrl+c.\n", stderr);
-      break;
-    case SIGUSR1:
-      puts("Hello!");
-      break;
+  switch (s) {
+  case SIGFPE:
+    fputs("Caught SIGFPE: arithmetic exception, such as division by zero.\n",
+          stderr);
+    exit(EXIT_FAILURE);
+  case SIGSEGV:
+    fputs("Caught SIGSEGV: segfault.\n", stderr);
+    exit(EXIT_FAILURE);
+    break;
+  case SIGINT:
+    fputs("Caught SIGINT: interactive attention signal, probably a ctrl+c.\n",
+          stderr);
+    done = true;
+    break;
+  case SIGUSR1:
+    puts("Hello!");
+    break;
   }
 }
 
 int main(void) {
 
-  printf("My PID = %ld\n", (long) getpid());
+  printf("My PID = %ld\n", (long)getpid());
 
   // Install signal handlers.
 
-  // signal(SIGFPE,  signal_handler);
+  signal(SIGFPE, signal_handler);
+  signal(SIGSEGV, signal_handler);
+  signal(SIGINT, signal_handler);
+  signal(SIGUSR1, signal_handler);
 
   // divide_by_zero();
   // segfault();
 
   // Wait until a signal is delivered.
 
-  // pause();
+  while (pause()) {
+    if (done)
+      break;
+  }
 
   puts("I'm done!");
 
