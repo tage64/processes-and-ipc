@@ -1,6 +1,7 @@
 #include "parser.h"    // cmd_t, position_t, parse_commands()
 
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
@@ -126,7 +127,12 @@ void get_line(char* buffer, size_t size) {
  * Make the parents wait for all the child processes.
  */
 void wait_for_all_cmds(int n) {
-  // Not implemented yet!
+  for (int i = 0; i < n; i++) {
+    if (wait(NULL) < 0) {
+      perror("Failed to wait");
+      exit(EXIT_FAILURE);
+    }
+  }
 }
 
 int main() {
