@@ -50,6 +50,17 @@ void fork_error() {
  *  create a new pipe and update the in and out members for the command..
  */
 void fork_cmd(int i) {
+  if (commands[i].pos == first || commands[i].pos == middle) {
+    int fd[2];
+
+    if (pipe(fd) != 0) {
+      perror("Failed to create pipe");
+      exit(EXIT_FAILURE);
+    }
+    commands[i].out = fd[WRITE];
+    commands[i + 1].in = fd[READ];
+  }
+    
   pid_t pid;
 
   switch (pid = fork()) {
@@ -57,6 +68,20 @@ void fork_cmd(int i) {
       fork_error();
     case 0:
       // Child process after a successful fork().
+
+      if (commands[i].pos == first || commands[i].pos == middle) {
+        close(commands[i + 1].in);
+        if (dup2(commands[i].out, STDOUT_FILENO) < 0) {
+          perror("Failed to redirect stdout");
+          exit(EXIT_FAILURE);
+        }
+      }
+      if (commands[i].pos == middle || commands[i].pos == last) {
+        if (dup2(commands[i].in, STDIN_FILENO) < 0) {
+          perror("Failed to redirect stdin");
+          exit(EXIT_FAILURE);
+        }
+      }
 
       // Execute the command in the contex of the child process.
       execvp(commands[i].argv[0], commands[i].argv);
@@ -68,6 +93,12 @@ void fork_cmd(int i) {
     default:
       // Parent process after a successful fork().
 
+      if (commands[i].pos == first || commands[i].pos == middle) {
+        close(commands[i].out);
+      }
+      if (commands[i].pos == middle || commands[i].pos == last) {
+        close(commands[i].in);
+      }
       break;
   }
 }
