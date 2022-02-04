@@ -135,19 +135,6 @@ void wait_for_all_cmds(int n) {
   }
 }
 
-void close_all_fds(int n) {
-  for (int i = 0; i < n; i++) {
-    if ((commands[i].pos == first || commands[i].pos == middle)
-        && is_open(commands[i].out)) {
-      close(commands[i].out);
-    }
-    if ((commands[i].pos == middle || commands[i].pos == last)
-        && is_open(commands[i].in)) {
-      close(commands[i].in);
-    }
-  }
-}
-
 int main() {
   int n;               // Number of commands in a command pipeline.
   size_t size = 128;   // Max size of a command line string.
@@ -164,7 +151,6 @@ int main() {
     fork_commands(n);
 
     wait_for_all_cmds(n);
-    close_all_fds(n);
   }
 
   exit(EXIT_SUCCESS);
