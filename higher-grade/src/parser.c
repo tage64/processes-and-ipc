@@ -155,8 +155,6 @@ position_t cmd_position(int i, int n) {
   if (i == n - 1) return last;
   if (i > 0 && i < n) return middle;
 
-  // TODO: Add more cases ...
-
   return unknown;
 }
 
